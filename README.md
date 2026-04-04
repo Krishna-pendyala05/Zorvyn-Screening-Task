@@ -55,11 +55,16 @@ Visit **[http://127.0.0.1:8000/](http://127.0.0.1:8000/)** to access the interac
 
 ## 🛡️ Access Control Matrix (RBAC)
 
-| Role | User Management | Financial CRUD | Analytics Dashboard |
+| Role | User Management | Financial Records | Analytics Dashboard |
 | :--- | :---: | :---: | :---: |
-| **ADMIN** | ✅ Full Access | ✅ Full Access | ✅ Read-Only |
-| **ANALYST** | ❌ Forbidden | ❌ Read-Only | ✅ Read-Only |
-| **VIEWER** | ❌ Forbidden | ❌ Forbidden | ✅ Read-Only |
+| **ADMIN** | ✅ Full Access | ✅ Full Access | 👁️ View Only |
+| **ANALYST** | ❌ Forbidden | 👁️ View Only | 👁️ View Only |
+| **VIEWER** | ❌ Forbidden | ❌ Forbidden | 👁️ View Only |
+
+**Key:** 
+- ✅ **Full Access:** Create, Read, Update, Delete
+- 👁️ **View Only:** Read Only
+- ❌ **Forbidden:** Access Denied
 
 ### **Test Credentials (via `seed_db.py`)**
 - **Admin:** `admin` / `admin123`
