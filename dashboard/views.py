@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiExample
 from django.db.models import Sum, Count
 from records.models import FinancialRecord
 from users.permissions import IsActiveUser
@@ -11,7 +11,18 @@ from .serializers import DashboardSummarySerializer, CategorySummarySerializer
 
 @extend_schema(
     tags=["Dashboard"],
-    responses={200: DashboardSummarySerializer}
+    responses={200: DashboardSummarySerializer},
+    examples=[
+        OpenApiExample(
+            "Successful Summary",
+            value={
+                "total_income": "15000.00",
+                "total_expenses": "5500.25",
+                "net_balance": "9499.75"
+            },
+            response_only=True,
+        )
+    ]
 )
 class DashboardSummaryView(APIView):
     """
@@ -49,7 +60,18 @@ class DashboardSummaryView(APIView):
 
 @extend_schema(
     tags=["Dashboard"],
-    responses={200: CategorySummarySerializer(many=True)}
+    responses={200: CategorySummarySerializer(many=True)},
+    examples=[
+        OpenApiExample(
+            "Categorical Breakdown",
+            value=[
+                {"category": "Salary", "total_amount": "12000.00", "record_count": 1},
+                {"category": "Office", "total_amount": "450.00", "record_count": 3},
+                {"category": "Travel", "total_amount": "1200.00", "record_count": 1}
+            ],
+            response_only=True,
+        )
+    ]
 )
 class CategorySummaryView(APIView):
     """

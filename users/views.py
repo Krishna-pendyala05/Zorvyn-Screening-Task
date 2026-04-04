@@ -19,7 +19,7 @@ class UserListCreateView(generics.ListCreateAPIView):
 
 class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
-    Retrieve, update, or delete a specific user account.
+    Retrieve, update, or delete a user.
     Strictly Admin-only access.
     """
     queryset = User.objects.all()
@@ -28,6 +28,7 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def perform_destroy(self, instance):
         """
-        Optional: Implement prevention of self-deletion logic here in Phase 5.
+        Soft-delete: Deactivate the user instead of removing from DB.
         """
-        super().perform_destroy(instance)
+        instance.is_active = False
+        instance.save()

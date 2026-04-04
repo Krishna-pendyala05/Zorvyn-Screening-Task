@@ -4,6 +4,8 @@ from .models import FinancialRecord
 from .serializers import RecordSerializer
 from .filters import RecordFilter
 from users.permissions import IsActiveUser, IsAdminRole, IsAnalystOrAbove
+from common.utils import record_audit_log
+from common.models import AuditLog
 
 # Domain: records | Purpose: Financial record management endpoints with RBAC enforcement
 
@@ -27,6 +29,18 @@ class RecordListCreateView(generics.ListCreateAPIView):
             return [IsActiveUser(), IsAnalystOrAbove()]
         return [IsActiveUser(), IsAdminRole()]
 
+    def perform_create(self, serializer):
+        """
+        Record the creation of a financial record.
+        """
+        instance = serializer.save()
+        record_audit_log(
+            user=self.request.user,
+            instance=instance,
+            action=AuditLog.Action.CREATE,
+            changes=serializer.data
+        )
+
 
 class RecordDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
@@ -45,3 +59,28 @@ class RecordDetailView(generics.RetrieveUpdateDestroyAPIView):
         if self.request.method == "GET":
             return [IsActiveUser(), IsAnalystOrAbove()]
         return [IsActiveUser(), IsAdminRole()]
+
+    def perform_update(self, serializer):
+        """
+        Record the modification of a financial record.
+        """
+        # Capture old state if needed, here we just log the new set
+        instance = serializer.save()
+        record_audit_log(
+            user=self.request.user,
+            instance=instance,
+            action=AuditLog.Action.UPDATE,
+            changes=serializer.data
+        )
+
+    def perform_destroy(self, instance):
+        """
+        Record the deletion of a financial record.
+        """
+        record_audit_log(
+            user=self.request.user,
+            instance=instance,
+            action=AuditLog.Action.DELETE,
+            changes={"id": str(instance.id), "amount": str(instance.amount)}
+        )
+        instance.delete()
