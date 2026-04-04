@@ -46,40 +46,32 @@ def seed():
     # Clear existing records to ensure idempotent seeding
     FinancialRecord.objects.all().delete()
 
-    FinancialRecord.objects.create(
-        amount="5000.00", 
-        type=FinancialRecord.RecordType.INCOME, 
-        category="Salary", 
-        date=date(2026, 4, 1),
-        notes="Monthly salary deposit"
-    )
-    FinancialRecord.objects.create(
-        amount="1200.00", 
-        type=FinancialRecord.RecordType.INCOME, 
-        category="Consulting", 
-        date=date(2026, 4, 5),
-        notes="Freelance project payoff"
-    )
-    FinancialRecord.objects.create(
-        amount="1500.00", 
-        type=FinancialRecord.RecordType.EXPENSE, 
-        category="Rent", 
-        date=date(2026, 4, 1),
-        notes="Main office rent"
-    )
-    FinancialRecord.objects.create(
-        amount="300.00", 
-        type=FinancialRecord.RecordType.EXPENSE, 
-        category="Utilities", 
-        date=date(2026, 4, 3)
-    )
-    FinancialRecord.objects.create(
-        amount="45.50", 
-        type=FinancialRecord.RecordType.EXPENSE, 
-        category="Software", 
-        date=date(2026, 4, 4),
-        notes="SaaS subscription"
-    )
+    from common.models import AuditLog
+    from common.utils import record_audit_log
+
+    def create_seeded_record(amount, rec_type, category, date, notes=None):
+        record = FinancialRecord.objects.create(
+            amount=amount, 
+            type=rec_type, 
+            category=category, 
+            date=date,
+            notes=notes if notes else "",
+            created_by=admin
+        )
+        changes = {
+            "amount": str(record.amount),
+            "type": record.type,
+            "category": record.category,
+            "date": str(record.date),
+            "notes": record.notes,
+        }
+        record_audit_log(user=admin, instance=record, action=AuditLog.Action.CREATE, changes=changes)
+
+    create_seeded_record("5000.00", FinancialRecord.RecordType.INCOME, "Salary", date(2026, 4, 1), "Monthly salary deposit")
+    create_seeded_record("1200.00", FinancialRecord.RecordType.INCOME, "Consulting", date(2026, 4, 5), "Freelance project payoff")
+    create_seeded_record("1500.00", FinancialRecord.RecordType.EXPENSE, "Rent", date(2026, 4, 1), "Main office rent")
+    create_seeded_record("300.00", FinancialRecord.RecordType.EXPENSE, "Utilities", date(2026, 4, 3))
+    create_seeded_record("45.50", FinancialRecord.RecordType.EXPENSE, "Software", date(2026, 4, 4), "SaaS subscription")
 
     print(f"Sample Records: {FinancialRecord.objects.count()} records created.")
     print("--- Seeding Complete ---")
