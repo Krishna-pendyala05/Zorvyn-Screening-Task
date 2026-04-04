@@ -33,7 +33,7 @@ A multi-app Django 5.1 backend for financial data processing. This system is des
 
 ## Key Features
 
-- **Advanced RBAC:** Secure JWT-based pipeline with Admin, Analyst, and Viewer tiers.
+- **RBAC:** Secure JWT-based pipeline with Admin, Analyst, and Viewer tiers.
 - **Forensic Auditing:** Real-time tracking of all modifications via JSON Deltas (Old vs. New).
 - **Data Integrity:** Unified soft-deletion system for both transactional and user data.
 - **Analytical Engine:** High-performance KPI engine using Django DB-level aggregation.
@@ -75,9 +75,9 @@ Visit the Swagger UI link in the Command Center to begin interactive testing.
 
 | Role        | User Mgmt   | Financial Records | Dashboard Analytics |
 | :---------- | :---------- | :---------------- | :------------------ |
-| **ADMIN**   | Full Access | Full Access       | View Analytics      |
-| **ANALYST** | Forbidden   | View Only         | View Analytics      |
-| **VIEWER**  | Forbidden   | Forbidden         | View Analytics      |
+| **ADMIN**   | Full Access | Full Access       | View Only           |
+| **ANALYST** | Forbidden   | View Only         | View Only           |
+| **VIEWER**  | Forbidden   | Forbidden         | View Only           |
 
 **Access Logic:**
 
