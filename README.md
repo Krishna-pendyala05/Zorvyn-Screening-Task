@@ -1,6 +1,6 @@
 # Zorvyn Finance Backend
 
-A multi-app Django 5.1 backend for financial data processing. This system is designed for Master-Level Reviewers to evaluate strict Role-Based Access Control (RBAC), data integrity, and forensic auditability.
+A multi-app Django 5.1 backend for financial data processing. This system is designed to evaluate strict Role-Based Access Control (RBAC), data integrity, and forensic auditability.
 
 ---
 
