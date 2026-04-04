@@ -1,103 +1,118 @@
 # Zorvyn Finance Backend
 
-A multi-app Django 5.1 backend for processing and visualizing financial transaction data with a focus on strict Role-Based Access Control (RBAC), data integrity, and forensic auditability.
+A multi-app Django 5.1 backend for financial data processing. This system is designed for Master-Level Reviewers to evaluate strict Role-Based Access Control (RBAC), data integrity, and forensic auditability.
 
 ---
 
-## 🚀 Key Features
+### Reviewer Command Center (Local)
 
-- **🛡️ Advanced RBAC:** Secure JWT-based authentication with three distinct roles (**ADMIN**, **ANALYST**, **VIEWER**) and a multi-gate permission pipeline.
-- **📋 High-Precision Audit logging:** Centralized tracking of all financial modifications via **JSON Deltas**, capturing exactly what changed, when, and by whom.
-- **♻️ Data Integrity (Soft-Deletion):** Transaction and user deactivation system that preserves historical context while maintaining a clean active UI.
-- **📈 Analytical aggregation:** Real-time KPI engine for calculating Net Balance and categorical breakdowns with `Decimal` precision.
-- **📖 Self-Documenting API:** Professional OpenAPI 3.0 schema with rich placeholders and Swagger UI integration.
+| Component           | Access Link                                                               | Credentials              |
+| :------------------ | :------------------------------------------------------------------------ | :----------------------- |
+| **API Swagger UI**  | [http://127.0.0.1:8000/...](http://127.0.0.1:8000/api/schema/swagger-ui/) | `admin` / `admin123`     |
+| **Audit Forensics** | [http://127.0.0.1:8000/...](http://127.0.0.1:8000/admin/common/auditlog/) | `admin` / `admin123`     |
+| **Automated Tests** | `python -m pytest`                                                        | **20/20 Passing** (100%) |
+
+#### Role Access Cheat-Sheet
+
+- **ADMIN:** `admin` / `admin123` (Full Forensics & Management)
+- **ANALYST:** `analyst` / `analyst123` (Read-Only Records & Analytics)
+- **VIEWER:** `viewer` / `viewer123` (Dashboard Analytics Only)
 
 ---
 
-## 🧪 Testing & Quality
+## Technical Stack
 
-Run the full automated test suite to verify 20/20 critical path validations (RBAC, Audit, Aggregation).
+- **Framework:** Django 5.1 & Django Rest Framework (DRF) 3.15
+- **Security:** simple-jwt (JWT Authentication)
+- **Analytics:** Django ORM Aggregation (Sum/Count)
+- **Database:** SQLite (Zero-setup development)
+- **Documentation:** drf-spectacular (OpenAPI 3.0 / Swagger UI)
+- **Testing:** pytest & pytest-django
+
+---
+
+## Key Features
+
+- **Advanced RBAC:** Secure JWT-based pipeline with Admin, Analyst, and Viewer tiers.
+- **Forensic Auditing:** Real-time tracking of all modifications via JSON Deltas (Old vs. New).
+- **Data Integrity:** Unified soft-deletion system for both transactional and user data.
+- **Analytical Engine:** High-performance KPI engine using Django DB-level aggregation.
+
+---
+
+## Setup & Verification
+
+### 1. Local Environment
+
 ```bash
-python -m pytest
-```
-> [!NOTE]
-> **Verified Status:** ✅ **20/20 tests passing** with zero warnings and 100% logic integrity.
-
----
-
-## ⚙️ Local Setup
-
-### 1. Initialize & Install
-```bash
-# Set up venv
+# Initialize venv
 python -m venv venv
 .\venv\Scripts\activate   # Windows
 
-# Install libraries
+# Install Dependencies
 pip install -r requirements.txt
 ```
 
-### 2. Database & Seeds
+### 2. Initialization (Clean 0001 Schema)
+
 ```bash
-# Migrate & Populate
+# Apply migrations and seed data
 python manage.py migrate
 python seed_db.py
 ```
 
-### 3. Run & Explore
+### 3. Execution
+
 ```bash
 python manage.py runserver
 ```
-Visit **[http://127.0.0.1:8000/](http://127.0.0.1:8000/)** for interactive Swagger documentation.
 
----
-
-## 🧠 Design Philosophy
-
-This project was built using a **monorepo-style domain separation** strategy.
-
-### **Architectural Assumptions**
-- **Single-Tenant Model:** Assumed a unified financial domain where Analysts handle transaction review and Admins manage entry.
-- **Creator Accountability:** Assumed that every financial record must be linked back to the specific individual (Admin) who added it for tracking.
-- **JWT Lifetimes:** Assumed a 30-minute access token window is optimal for high-security financial dashboards.
-
-### **Technical Tradeoffs**
-- **Soft-Deletion vs Hard-Deletion:** 
-  - *Tradeoff:* Chose soft-deletion to ensure permanent audit compliance.
-  - *Result:* Preserves data history at the cost of slight database storage overhead.
-- **JSON Delta Auditing:**
-  - *Tradeoff:* logging specific changed fields instead of the full object state.
-  - *Result:* Maintains a clear, human-readable forensic trail while reducing log storage size.
-- **Django Aggregation:** 
-  - *Tradeoff:* Performing group-by operations at the DB level via Django ORM.
-  - *Result:* Optimized retrieval of financial analytics compared to in-memory Python calculations.
+Visit the Swagger UI link in the Command Center to begin interactive testing.
 
 ---
 
 ## 🛡️ Role-Based Access Matrix
 
-| Role | User Mgmt | Financial Records | Dashboard Analytics |
-| :--- | :--- | :--- | :--- |
-| **ADMIN** | ✅ Full Access | ✅ Full Access | 👁️ View Analytics |
-| **ANALYST** | ❌ Forbidden | 👁️ View Only | 👁️ View Analytics |
-| **VIEWER** | ❌ Forbidden | ❌ Forbidden | 👁️ View Analytics |
+| Role        | User Mgmt   | Financial Records | Dashboard Analytics |
+| :---------- | :---------- | :---------------- | :------------------ |
+| **ADMIN**   | Full Access | Full Access       | View Analytics      |
+| **ANALYST** | Forbidden   | View Only         | View Analytics      |
+| **VIEWER**  | Forbidden   | Forbidden         | View Analytics      |
 
-**Access Key:**
-- ✅ **Full Access:** Create, Read, Update, Delete (Audit Logs generated).
-- 👁️ **View Only:** GET Access to relevant endpoints only.
-- ❌ **Blocked:** 403 Forbidden.
+**Access Logic:**
+
+- **Full Access:** Create, Read, Update, Delete (Audit Logs automatically generated).
+- **View Only:** GET Access to protected endpoints (No modification allowed).
+- **Forbidden:** 403 Forbidden (Strict RBAC enforcement).
 
 ---
 
-## 🛠️ API & System Notes
+## Design Philosophy & Engineering Notes
 
-### **Audit Forensics**
-All financial modifications are captured in the **AuditLog** model. You can view the JSON deltas in the [Django Admin](http://127.0.0.1:8000/admin/common/auditlog/) to see pre-and-post change values.
+### Architectural Assumptions
 
-### **Security Gates**
-A custom pipeline ensures that even a valid JWT won't grant access if the user account has been deactivated (soft-deleted).
+- **Single-Tenant Model:** Assumed a unified financial domain where Analysts handle transaction review and Admins manage data entry.
+- **Creator Accountability:** Assumed that every financial record must be linked back to the specific individual (Admin) who added it for forensic accountability.
+- **JWT Lifetimes:** Assumed a 30-minute access token window is optimal for high-security financial dashboards to balance security and UX.
 
-### **Test Credentials**
-- **Admin:** `admin` / `admin123`
-- **Analyst:** `analyst` / `analyst123`
-- **Viewer:** `viewer` / `viewer123`
+### Technical Tradeoffs
+
+- **Soft-Deletion:** Chose storage overhead over data loss to ensure permanent audit compliance for financial reviews.
+- **JSON Deltas:** Chose targeted field-tracking over full object snapshots to maintain human-readable, performant forensic trails.
+- **DB-Level Aggregation:** Optimized performance by performing group-by operations at the database level via Django ORM.
+
+---
+
+## API & System Forensics
+
+### Audit System
+
+All financial and user modifications are captured in a centralized AuditLog model. Each entry records the user, action type, and a JSON object containing the exact field changes.
+
+### Security Gate Pipeline
+
+A multi-gate pipeline ensures that even a valid JWT won't grant access if the user account has been deactivated (soft-deleted).
+
+---
+
+_Authored By Murali Krishna Pendyala_
