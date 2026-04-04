@@ -63,7 +63,7 @@ class FinancialRecord(models.Model):
         constraints = [
             # Enforce positive values at the database level
             CheckConstraint(
-                check=Q(amount__gt=0), 
+                condition=Q(amount__gt=0), 
                 name="record_amount_positive"
             )
         ]

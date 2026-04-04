@@ -14,6 +14,15 @@ class TestUserRBAC:
         response = admin_client.get(url)
         assert response.status_code == 200
 
+    def test_admin_can_deactivate_user(self, admin_client, analyst_user):
+        url = reverse("user_detail", kwargs={"pk": analyst_user.id})
+        response = admin_client.delete(url)
+        assert response.status_code == 204
+        
+        # Refresh from DB and verify it's a soft-delete (deactivation)
+        analyst_user.refresh_from_db()
+        assert analyst_user.is_active is False
+
     def test_analyst_cannot_list_users(self, analyst_client):
         """
         Verify that ANALYST users are blocked from listing users.

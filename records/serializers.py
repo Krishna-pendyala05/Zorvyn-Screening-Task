@@ -8,10 +8,16 @@ class RecordSerializer(serializers.ModelSerializer):
     Serializer for the FinancialRecord model.
     Handles data validation for financial transactions.
     """
+    # Display the creator's username in responses
+    created_by = serializers.StringRelatedField(read_only=True)
+
     class Meta:
         model = FinancialRecord
-        fields = ["id", "amount", "type", "category", "date", "notes", "created_at", "updated_at"]
-        read_only_fields = ["id", "created_at", "updated_at"]
+        fields = [
+            "id", "amount", "type", "category", "date", "notes", 
+            "created_by", "created_at", "updated_at"
+        ]
+        read_only_fields = ["id", "created_by", "created_at", "updated_at"]
         extra_kwargs = {
             "amount": {
                 "help_text": "Total monetary value of the record. Must be positive.",

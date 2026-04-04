@@ -13,7 +13,7 @@ from common.models import AuditLog
 class RecordListCreateView(generics.ListCreateAPIView):
     """
     List existing financial records or create a new record.
-    Analysts can read; Admins can create.
+    Analysts & Admins can read; only Admins can create.
     """
     queryset = FinancialRecord.objects.all()
     serializer_class = RecordSerializer
@@ -31,9 +31,9 @@ class RecordListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         """
-        Record the creation of a financial record.
+        Record the creation of a financial record with accountability.
         """
-        instance = serializer.save()
+        instance = serializer.save(created_by=self.request.user)
         record_audit_log(
             user=self.request.user,
             instance=instance,
@@ -45,7 +45,7 @@ class RecordListCreateView(generics.ListCreateAPIView):
 class RecordDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     Retrieve, update, or delete a specific financial record.
-    Analysts can read; Admins can update/delete.
+    Analysts & Admins can read; only Admins can update/delete.
     """
     queryset = FinancialRecord.objects.all()
     serializer_class = RecordSerializer
@@ -62,16 +62,35 @@ class RecordDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def perform_update(self, serializer):
         """
-        Record the modification of a financial record.
+        Record the modification of a financial record with a delta diff.
         """
-        # Capture old state if needed, here we just log the new set
+        # Capture old values before saving
+        old_instance = self.get_object()
+        old_data = {
+            "amount": str(old_instance.amount),
+            "category": old_instance.category,
+            "type": old_instance.type,
+            "date": str(old_instance.date),
+            "notes": old_instance.notes
+        }
+        
         instance = serializer.save()
-        record_audit_log(
-            user=self.request.user,
-            instance=instance,
-            action=AuditLog.Action.UPDATE,
-            changes=serializer.data
-        )
+        
+        # Identify changes
+        new_data = serializer.data
+        changes = {
+            field: [old_data[field], str(new_data[field])]
+            for field in old_data
+            if old_data[field] != str(new_data[field])
+        }
+        
+        if changes:
+            record_audit_log(
+                user=self.request.user,
+                instance=instance,
+                action=AuditLog.Action.UPDATE,
+                changes=changes
+            )
 
     def perform_destroy(self, instance):
         """

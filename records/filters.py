@@ -33,4 +33,4 @@ class RecordFilter(django_filters.FilterSet):
 
     class Meta:
         model = FinancialRecord
-        fields = ["category", "type"]
+        fields = []
