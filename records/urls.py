@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import RecordListCreateView, RecordDetailView
 
-# Domain: records | Purpose: URL routing for financial records CRUD
+# Domain: records | Purpose: URL routing for financial record CRUD
 
 urlpatterns = [
     path("", RecordListCreateView.as_view(), name="record_list_create"),

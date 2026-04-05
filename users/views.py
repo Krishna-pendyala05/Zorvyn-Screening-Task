@@ -3,42 +3,72 @@ from drf_spectacular.utils import extend_schema
 from .models import User
 from .serializers import UserSerializer
 from .permissions import IsActiveUser, IsAdminRole
-from common.utils import record_audit_log
+from common.utils import record_audit_log, compute_delta
 from common.models import AuditLog
 
-# Domain: users | Purpose: Admin-only endpoints for user account management and RBAC admin
+# Domain: users | Purpose: Admin-only endpoints for user account management
+
 
 @extend_schema(tags=["Users"])
 class UserListCreateView(generics.ListCreateAPIView):
-    """
-    List existing users or create a new user.
-    Strictly Admin-only access.
-    """
+    # Bulk management view enabling admins to rapidly audit or provision active directories
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsActiveUser, IsAdminRole]
 
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        record_audit_log(
+            user=self.request.user,
+            instance=instance,
+            action=AuditLog.Action.CREATE,
+            changes={
+                "username": instance.username,
+                "email": instance.email,
+                "role": instance.role,
+                "is_active": str(instance.is_active),
+            },
+        )
 
+
+@extend_schema(tags=["Users"])
 class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
-    """
-    Retrieve, update, or delete a user.
-    Strictly Admin-only access.
-    """
+    # Isolates structural role upgrades and soft-terminations for individual accounts
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsActiveUser, IsAdminRole]
+
+    def perform_update(self, serializer):
+        old = self.get_object()
+        old_data = {
+            "username": old.username,
+            "email": old.email,
+            "role": old.role,
+            "is_active": str(old.is_active),
+        }
+        instance = serializer.save()
+        new_data = {
+            "username": instance.username,
+            "email": instance.email,
+            "role": instance.role,
+            "is_active": str(instance.is_active),
+        }
+        changes = compute_delta(old_data, new_data)
+        if changes:
+            record_audit_log(
+                user=self.request.user,
+                instance=instance,
+                action=AuditLog.Action.UPDATE,
+                changes=changes,
+            )
 
     def perform_destroy(self, instance):
-        """
-        Soft-delete: Deactivate the user instead of removing from DB.
-        Includes a secure audit record for account revocation.
-        """
+        # Soft-delete preserves the user record for forensic accountability
         instance.is_active = False
         instance.save()
-        
         record_audit_log(
             user=self.request.user,
             instance=instance,
             action=AuditLog.Action.DELETE,
-            changes={"id": str(instance.id), "username": instance.username, "status": "Deactivated"}
+            changes={"id": str(instance.id), "username": instance.username, "status": "Deactivated"},
         )

@@ -2,30 +2,28 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 import uuid
 
-# Domain: users | Purpose: Custom User model with Role-Based Access Control fields
+# Domain: users | Purpose: Custom User model with role field for RBAC
+
 
 class User(AbstractUser):
+    # Extends Django baseline to secure system endpoints using role-based tiering
+
     class UserRole(models.TextChoices):
         VIEWER = "VIEWER", "Viewer"
         ANALYST = "ANALYST", "Analyst"
         ADMIN = "ADMIN", "Admin"
 
-    # UUID as primary key is required for all models in this project
+    # UUIDs prevent sequential ID enumeration on user accounts
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    
-    # Custom role field for RBAC
+
     role = models.CharField(
-        max_length=10, 
-        choices=UserRole.choices, 
+        max_length=10,
+        choices=UserRole.choices,
         default=UserRole.VIEWER,
-        help_text="Role-based access level for this user."
     )
-    
-    # Standard is_active status - used by IsActiveUser permission gate
-    is_active = models.BooleanField(
-        default=True,
-        help_text="Designates whether this user should be treated as active."
-    )
+
+    # is_active is the soft-delete mechanism for users
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         db_table = "users"

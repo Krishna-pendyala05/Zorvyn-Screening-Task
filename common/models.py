@@ -2,35 +2,33 @@ from django.db import models
 from django.conf import settings
 import uuid
 
-# Domain: common | Purpose: Centralized audit logging for the entire project
+# Domain: common | Purpose: Centralized audit log for all write operations across the system
+
 
 class AuditLog(models.Model):
+    # Centralizes forensic tracking of system-wide state changes and data tampering
     class Action(models.TextChoices):
         CREATE = "CREATE", "Create"
         UPDATE = "UPDATE", "Update"
         DELETE = "DELETE", "Delete"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    
-    # Who performed the action
+
+    # SET_NULL preserves the log entry if the acting user is later deactivated
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
-        related_name="audit_logs"
+        related_name="audit_logs",
     )
-    
-    # What was affected
+
     model_name = models.CharField(max_length=100)
     object_id = models.UUIDField(null=True)
-    
-    # What action was taken
     action = models.CharField(max_length=10, choices=Action.choices)
-    
-    # What changed (JSON delta)
+
+    # JSON delta stores only the changed fields, not a full object snapshot
     changes = models.JSONField(default=dict, blank=True)
-    
-    # Metadata
+
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
