@@ -18,8 +18,12 @@ DEBUG = os.getenv("DEBUG", "True") == "True"
 
 # Security: Dynamically allow host names (onrender.com)
 ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
-if not DEBUG and ".onrender.com" not in str(ALLOWED_HOSTS):
-     ALLOWED_HOSTS.append(".onrender.com")
+if not DEBUG:
+    # Ensure Render subdomains pass
+    if ".onrender.com" not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(".onrender.com")
+    # Security: Required for Render's HTTPS proxy load balancer
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
