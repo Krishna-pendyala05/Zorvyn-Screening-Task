@@ -16,14 +16,13 @@ SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-fallback-key-for-dev-only"
 # Security: DEBUG must be False in production (Render sets DEBUG=False)
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-# Security: Dynamically allow host names (onrender.com)
-ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
+# Security: Dynamically allow host names (onrender.com fallback)
 if not DEBUG:
-    # Ensure Render subdomains pass
-    if ".onrender.com" not in ALLOWED_HOSTS:
-        ALLOWED_HOSTS.append(".onrender.com")
+    ALLOWED_HOSTS = ["*"]
     # Security: Required for Render's HTTPS proxy load balancer
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+else:
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
