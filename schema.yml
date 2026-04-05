@@ -1,0 +1,795 @@
+openapi: 3.0.3
+info:
+  title: Zorvyn Finance API
+  version: 1.0.0
+  description: Multi-role financial data processing and access control backend.
+paths:
+  /api/dashboard/categories/:
+    get:
+      operationId: api_dashboard_categories_list
+      tags:
+      - Dashboard
+      security:
+      - jwtAuth: []
+      - Bearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategorySummary'
+              examples:
+                CategoricalBreakdown:
+                  value:
+                  - - category: Salary
+                      total_amount: '12000.00'
+                      record_count: 1
+                    - category: Office
+                      total_amount: '450.00'
+                      record_count: 3
+                    - category: Travel
+                      total_amount: '1200.00'
+                      record_count: 1
+                  summary: Categorical Breakdown
+          description: ''
+  /api/dashboard/summary/:
+    get:
+      operationId: api_dashboard_summary_retrieve
+      tags:
+      - Dashboard
+      security:
+      - jwtAuth: []
+      - Bearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSummary'
+              examples:
+                SuccessfulSummary:
+                  value:
+                    total_income: '15000.00'
+                    total_expenses: '5500.25'
+                    net_balance: '9499.75'
+                  summary: Successful Summary
+          description: ''
+  /api/records/:
+    get:
+      operationId: api_records_list
+      parameters:
+      - in: query
+        name: category
+        schema:
+          type: string
+      - in: query
+        name: date_after
+        schema:
+          type: string
+          format: date
+        description: Records on or after this date (YYYY-MM-DD).
+      - in: query
+        name: date_before
+        schema:
+          type: string
+          format: date
+        description: Records on or before this date (YYYY-MM-DD).
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: type
+        schema:
+          type: string
+          enum:
+          - EXPENSE
+          - INCOME
+        description: |-
+          Filter by transaction type (INCOME or EXPENSE).
+
+          * `INCOME` - Income
+          * `EXPENSE` - Expense
+      tags:
+      - Records
+      security:
+      - jwtAuth: []
+      - Bearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRecordList'
+          description: ''
+    post:
+      operationId: api_records_create
+      tags:
+      - Records
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RecordRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RecordRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - Bearer: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Record'
+          description: ''
+  /api/records/{id}/:
+    get:
+      operationId: api_records_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Records
+      security:
+      - jwtAuth: []
+      - Bearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Record'
+          description: ''
+    put:
+      operationId: api_records_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Records
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RecordRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RecordRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - Bearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Record'
+          description: ''
+    patch:
+      operationId: api_records_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Records
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedRecordRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedRecordRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedRecordRequest'
+      security:
+      - jwtAuth: []
+      - Bearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Record'
+          description: ''
+    delete:
+      operationId: api_records_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Records
+      security:
+      - jwtAuth: []
+      - Bearer: []
+      responses:
+        '204':
+          description: No response body
+  /api/users/:
+    get:
+      operationId: api_users_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - Users
+      security:
+      - jwtAuth: []
+      - Bearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUserList'
+          description: ''
+    post:
+      operationId: api_users_create
+      tags:
+      - Users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - Bearer: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/users/{id}/:
+    get:
+      operationId: api_users_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Users
+      security:
+      - jwtAuth: []
+      - Bearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    put:
+      operationId: api_users_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - Bearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    patch:
+      operationId: api_users_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+      security:
+      - jwtAuth: []
+      - Bearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    delete:
+      operationId: api_users_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Users
+      security:
+      - jwtAuth: []
+      - Bearer: []
+      responses:
+        '204':
+          description: No response body
+  /api/users/auth/login/:
+    post:
+      operationId: api_users_auth_login_create
+      description: |-
+        Takes a set of user credentials and returns an access and refresh JSON web
+        token pair to prove the authentication of those credentials.
+      summary: Login & Obtain Token
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPairRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPairRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPairRequest'
+        required: true
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenObtainPair'
+          description: ''
+  /api/users/auth/token/refresh/:
+    post:
+      operationId: api_users_auth_token_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      summary: Refresh Access Token
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+        required: true
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+components:
+  schemas:
+    CategorySummary:
+      type: object
+      properties:
+        category:
+          type: string
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        record_count:
+          type: integer
+      required:
+      - category
+      - record_count
+      - total_amount
+    DashboardSummary:
+      type: object
+      properties:
+        total_income:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        total_expenses:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        net_balance:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+      required:
+      - net_balance
+      - total_expenses
+      - total_income
+    PaginatedRecordList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Record'
+    PaginatedUserList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+    PatchedRecordRequest:
+      type: object
+      properties:
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          description: Total monetary value. Must be positive.
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TypeEnum'
+          description: |-
+            Classification: INCOME or EXPENSE.
+
+            * `INCOME` - Income
+            * `EXPENSE` - Expense
+        category:
+          type: string
+          minLength: 1
+          description: Domain of the record (e.g., Salary, Office, Utilities).
+          maxLength: 50
+        date:
+          type: string
+          format: date
+          description: Transaction date (YYYY-MM-DD).
+        notes:
+          type: string
+    PatchedUserRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          title: Email address
+          maxLength: 254
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+        is_active:
+          type: boolean
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+    Record:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          description: Total monetary value. Must be positive.
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TypeEnum'
+          description: |-
+            Classification: INCOME or EXPENSE.
+
+            * `INCOME` - Income
+            * `EXPENSE` - Expense
+        category:
+          type: string
+          description: Domain of the record (e.g., Salary, Office, Utilities).
+          maxLength: 50
+        date:
+          type: string
+          format: date
+          description: Transaction date (YYYY-MM-DD).
+        notes:
+          type: string
+        created_by:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - amount
+      - category
+      - created_at
+      - created_by
+      - date
+      - id
+      - type
+      - updated_at
+    RecordRequest:
+      type: object
+      properties:
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          description: Total monetary value. Must be positive.
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TypeEnum'
+          description: |-
+            Classification: INCOME or EXPENSE.
+
+            * `INCOME` - Income
+            * `EXPENSE` - Expense
+        category:
+          type: string
+          minLength: 1
+          description: Domain of the record (e.g., Salary, Office, Utilities).
+          maxLength: 50
+        date:
+          type: string
+          format: date
+          description: Transaction date (YYYY-MM-DD).
+        notes:
+          type: string
+      required:
+      - amount
+      - category
+      - date
+      - type
+    RoleEnum:
+      enum:
+      - VIEWER
+      - ANALYST
+      - ADMIN
+      type: string
+      description: |-
+        * `VIEWER` - Viewer
+        * `ANALYST` - Analyst
+        * `ADMIN` - Admin
+    TokenObtainPair:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          readOnly: true
+      required:
+      - access
+      - refresh
+    TokenObtainPairRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          writeOnly: true
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - password
+      - username
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+      required:
+      - access
+    TokenRefreshRequest:
+      type: object
+      properties:
+        refresh:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - refresh
+    TypeEnum:
+      enum:
+      - INCOME
+      - EXPENSE
+      type: string
+      description: |-
+        * `INCOME` - Income
+        * `EXPENSE` - Expense
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          title: Email address
+          maxLength: 254
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+        is_active:
+          type: boolean
+        date_joined:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - date_joined
+      - id
+      - username
+    UserRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          title: Email address
+          maxLength: 254
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+        is_active:
+          type: boolean
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - password
+      - username
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+tags:
+- name: Auth
+  description: Authentication and Token management
+- name: Users
+  description: User account and RBAC management
+- name: Records
+  description: Financial transaction CRUD
+- name: Dashboard
+  description: Analytical summaries and metrics

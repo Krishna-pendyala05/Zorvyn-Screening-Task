@@ -1,17 +1,25 @@
 import os
+import dj_database_url
 from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
 
-# Domain: core | Purpose: Global settings and security configuration for Zorvyn Backend
+# Domain: core | Purpose: Production-ready global settings for Zorvyn Backend
 
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Security: Uses env var SECRET_KEY; fallback only for local development
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-fallback-key-for-dev-only")
+
+# Security: DEBUG must be False in production (Render sets DEBUG=False)
 DEBUG = os.getenv("DEBUG", "True") == "True"
-ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "").split(",") if h.strip()]
+
+# Security: Dynamically allow host names (onrender.com)
+ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
+if not DEBUG and ".onrender.com" not in str(ALLOWED_HOSTS):
+     ALLOWED_HOSTS.append(".onrender.com")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -32,6 +40,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware", 
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -60,11 +69,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "core.wsgi.application"
 
+# Database: Automatically chooses between SQLite (local) and Postgres (Render/Cloud)
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    "default": dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=600,
+    )
 }
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -108,7 +118,6 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": False,
-    # Kept False because token_blacklist app is deliberately omitted to reduce complexity
     "BLACKLIST_AFTER_ROTATION": False,
     "UPDATE_LAST_LOGIN": False,
     "ALGORITHM": "HS256",
@@ -124,5 +133,25 @@ LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
+
+# Static Files (CSS/JS/Images)
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    # Compression and hashing ensures cached Swagger UI styles always stay fresh
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+# Security: Required for Render's https proxy load balancer
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.onrender.com",
+    "http://127.0.0.1",
+    "http://localhost",
+]
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
