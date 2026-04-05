@@ -16,16 +16,17 @@ SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-fallback-key-for-dev-only"
 # Security: DEBUG must be False in production (Render sets DEBUG=False)
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-# Security: Production Host Whitelisting (Always explicit, never wildcard)
-ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,zorvyn-screening-task.onrender.com").split(",") if h.strip()]
-if not DEBUG:
-    if ".onrender.com" not in str(ALLOWED_HOSTS):
-        ALLOWED_HOSTS.append(".onrender.com")
-    
-    # Security: Required for Render's HTTPS/Host proxy load balancer
-    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-    USE_X_FORWARDED_HOST = True
-    USE_X_FORWARDED_PORT = True
+# Security: Production Host Whitelisting (Explicit, hardcoded for maximum security)
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    "0.0.0.0",
+    "zorvyn-screening-task.onrender.com",
+    ".onrender.com"
+]
+
+# Security: Required for Render's HTTPS proxy load balancer
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
