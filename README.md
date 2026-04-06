@@ -16,7 +16,7 @@ A multi-app Django 5.1 REST API backend for financial data processing, built to 
 
 ## ⚡ Reviewer Quick-Start
 
-After completing the [local setup](#️-local-setup) below, all entry points are listed here.
+After completing the [local setup](#local-setup) below, all entry points are listed here.
 
 | What                | Where                                                                                        | Credentials          |
 | :------------------ | :------------------------------------------------------------------------------------------- | :------------------- |
@@ -94,6 +94,7 @@ zorvyn-finance/
 
 ---
 
+<a id="local-setup"></a>
 ## 🚀 Local Setup
 
 ```bash
