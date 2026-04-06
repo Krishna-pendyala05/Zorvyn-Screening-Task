@@ -215,9 +215,15 @@ All endpoints are prefixed with `/api/`. Authentication uses `Authorization: Bea
 
 3. **Soft delete on records, not on users.** Financial records are soft-deleted at the model level (`FinancialRecord.delete()` overridden), making it impossible to accidentally hard-delete via the API. Users are deactivated (via `is_active=False` in the `perform_destroy` view) rather than soft-deleted via a separate flag, aligning with Django's built-in `is_active` convention.
 
-4. **Audit-before-delete ordering.** In `RecordDetailView.perform_destroy`, the audit log is written _before_ calling `instance.delete()`. This ensures that if the soft-delete fails, no phantom audit entry exists for a deletion that didn't happen. The opposite order would create an orphaned log.
+4. **Pytest over Django's built-in `TestCase`.** Pytest's fixture system (dependency injection) is cleaner than `unittest` style inheritance and avoids boilerplate. Integration tests (full request/response cycle) were prioritized over unit tests, because in a finance app the entry points between auth, permissions, and serializers are where real bugs surface.
 
-5. **Pytest over Django's built-in `TestCase`.** Pytest's fixture system (dependency injection) is cleaner than `unittest` style inheritance and avoids boilerplate. Integration tests (full request/response cycle) were prioritized over unit tests, because in a finance app the entry points between auth, permissions, and serializers are where real bugs surface.
+5. **Atomic audit logging.** Every write operation (CREATE, UPDATE, DELETE) on both `records/` and `users/` wraps the database mutation and the audit log INSERT inside `transaction.atomic()`. If either step fails, both roll back — no un-logged mutations, no orphaned log entries.
+
+### Known Limitations
+
+1. **JWT token blacklisting is off.** `BLACKLIST_AFTER_ROTATION` and `ROTATE_REFRESH_TOKENS` are both disabled. This means there is no logout endpoint, a valid access token continues to work for its full 30-minute lifetime even after the account is deactivated. This was a deliberate scope decision: implementing token blacklisting requires an additional database table and a token-invalidation endpoint, which adds infrastructure complexity beyond what was required. The 30-minute access token TTL acts as the natural expiry window. In production, enabling blacklisting or switching to short-lived tokens with a revocation list would be the correct approach.
+
+2. **`seed_db.py` runs on every Render deploy.** The `render-build.sh` build script calls `python seed_db.py` unconditionally. For users, this is safe as `get_or_create` is idempotent. For financial records, all rows are wiped and recreated on each deploy. This is acceptable for the demo environment but would need to be a one-time bootstrap step in any real deployment.
 
 ---
 
