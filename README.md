@@ -8,7 +8,7 @@ A multi-app Django 5.1 REST API backend for financial data processing, built to 
 
 - **Live API Base URL:** `https://zorvyn-screening-task.onrender.com`
 - **Interactive Docs (Swagger UI):** `https://zorvyn-screening-task.onrender.com/api/schema/swagger-ui/`
-- **Static Schema (Offline):** [`schema.yml`](./schema.yml) — raw OpenAPI 3.0 specification
+- **Static Schema (Offline):** [`schema.yml`](./schema.yml) (raw OpenAPI 3.0 specification)
 
 > Visiting the root URL (`/`) redirects directly to the Swagger UI.
 
@@ -23,13 +23,13 @@ After completing the [local setup](#️-local-setup) below, all entry points are
 | **Swagger UI**      | [http://127.0.0.1:8000/api/schema/swagger-ui/](http://127.0.0.1:8000/api/schema/swagger-ui/) | `admin` / `admin123` |
 | **Django Admin**    | [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/)                                 | `admin` / `admin123` |
 | **Audit Forensics** | [http://127.0.0.1:8000/admin/common/auditlog/](http://127.0.0.1:8000/admin/common/auditlog/) | `admin` / `admin123` |
-| **Run Test Suite**  | `python -m pytest -v` (20 integration tests, all passing)                                    | —                    |
+| **Run Test Suite**  | `python -m pytest -v` (20 integration tests, all passing)                                    | -                    |
 
 ### Seeded Credentials (Role Cheat-Sheet)
 
 | Role        | Username  | Password     | What they can access                          |
 | :---------- | :-------- | :----------- | :-------------------------------------------- |
-| **ADMIN**   | `admin`   | `admin123`   | Everything — users, records, dashboard, audit |
+| **ADMIN**   | `admin`   | `admin123`   | Everything: users, records, dashboard, audit  |
 | **ANALYST** | `analyst` | `analyst123` | Read financial records + dashboard only       |
 | **VIEWER**  | `viewer`  | `viewer123`  | Dashboard analytics only (no raw records)     |
 
@@ -40,29 +40,29 @@ After completing the [local setup](#️-local-setup) below, all entry points are
 | Layer              | Technology                                                           |
 | :----------------- | :------------------------------------------------------------------- |
 | **Framework**      | Django 5.1 + Django REST Framework 3.15                              |
-| **Authentication** | `djangorestframework-simplejwt` — stateless JWT (Bearer tokens)      |
-| **API Docs**       | `drf-spectacular` — auto-generated OpenAPI 3.0 & Swagger UI          |
-| **Filtering**      | `django-filter` — URL-param based QuerySet filtering                 |
+| **Authentication** | `djangorestframework-simplejwt`: stateless JWT (Bearer tokens)       |
+| **API Docs**       | `drf-spectacular`: auto-generated OpenAPI 3.0 & Swagger UI           |
+| **Filtering**      | `django-filter`: URL-param based QuerySet filtering                  |
 | **Database**       | SQLite (local) / PostgreSQL (cloud, via `dj-database-url`)           |
-| **Static Files**   | `whitenoise` — serves Swagger UI assets without a reverse proxy      |
+| **Static Files**   | `whitenoise`: serves Swagger UI assets without a reverse proxy       |
 | **Production**     | `gunicorn` WSGI server, deployed on Render                           |
-| **Testing**        | `pytest` + `pytest-django` — integration tests via DRF's `APIClient` |
+| **Testing**        | `pytest` + `pytest-django`: integration tests via DRF's `APIClient`  |
 
 ---
 
 ## ✨ Key Features
 
-- **Three-tier RBAC** — Admin, Analyst, and Viewer roles with independently enforced permission gates on every endpoint.
-- **Forensic Audit Logging** — Every CREATE, UPDATE, and DELETE (on both users and financial records) is logged with a JSON delta showing only changed fields. Logs are written from the REST API and from Django Admin.
-- **Soft Deletion** — Financial records are never hard-deleted via the API. A custom `NonDeletedManager` hides them from all queries; `all_objects` exposes them for admin and audit access.
-- **Data Integrity** — A DB-level `CheckConstraint` enforces that `amount > 0`. A serializer-level `validate_amount` gives a descriptive API error before it reaches the DB.
-- **Dashboard Analytics** — Aggregation is performed entirely at the database level using `SUM` and `COUNT`, avoiding loading row data into Python memory.
+- **Three-tier RBAC:** Admin, Analyst, and Viewer roles with independently enforced permission gates on every endpoint.
+- **Forensic Audit Logging:** Every CREATE, UPDATE, and DELETE (on both users and financial records) is logged with a JSON delta showing only changed fields. Logs are written from the REST API and from Django Admin.
+- **Soft Deletion:** Financial records are never hard-deleted via the API. A custom `NonDeletedManager` hides them from all queries; `all_objects` exposes them for admin and audit access.
+- **Data Integrity:** A DB-level `CheckConstraint` enforces that `amount > 0`. A serializer-level `validate_amount` gives a descriptive API error before it reaches the DB.
+- **Dashboard Analytics:** Aggregation is performed entirely at the database level using `SUM` and `COUNT`, avoiding loading row data into Python memory.
 
 ---
 
 ## 🏗️ Architecture
 
-This project is a **modular monolith** — a single Django process with a single database, but with business logic strictly partitioned into four independent Django apps. Each app owns its own models, serializers, views, URLs, and tests. Nothing bleeds across boundaries unless explicitly imported.
+This project is a **modular monolith**: a single Django process with a single database, but with business logic strictly partitioned into four independent Django apps. Each app owns its own models, serializers, views, URLs, and tests. Nothing bleeds across boundaries unless explicitly imported.
 
 ```
 zorvyn-finance/
@@ -75,10 +75,10 @@ zorvyn-finance/
 
 **Why this structure?**
 
-- **`users/` vs `records/` separation** — Authentication and financial data management are distinct concerns. Keeping them in separate apps means their models, permissions, and tests never share a file, making each easier to reason about independently.
-- **`dashboard/` is intentionally write-free** — It owns no models and performs no mutations. All it does is aggregate data from `records/` via DB-level `SUM` and `COUNT`. Keeping it isolated means changes to aggregation logic can never accidentally touch the financial write path.
-- **`common/` as shared infrastructure** — The `AuditLog` model and `record_audit_log()` utility are used by `users/`, `records/`, and both admin files. Centralising them in `common/` avoids duplication and ensures every write surface (REST API and Django Admin) uses the exact same logging path.
-- **`core/` has no models** — It is purely coordination: settings, root URLs, and WSGI/ASGI entry points. This prevents the anti-pattern of putting business logic in the project package.
+- **`users/` vs `records/` separation:** Authentication and financial data management are distinct concerns. Keeping them in separate apps means their models, permissions, and tests never share a file, making each easier to reason about independently.
+- **`dashboard/` is intentionally write-free:** It owns no models and performs no mutations. All it does is aggregate data from `records/` via DB-level `SUM` and `COUNT`. Keeping it isolated means changes to aggregation logic can never accidentally touch the financial write path.
+- **`common/` as shared infrastructure:** The `AuditLog` model and `record_audit_log()` utility are used by `users/`, `records/`, and both admin files. Centralising them in `common/` avoids duplication and ensures every write surface (REST API and Django Admin) uses the exact same logging path.
+- **`core/` has no models:** It is purely coordination: settings, root URLs, and WSGI/ASGI entry points. This prevents the anti-pattern of putting business logic in the project package.
 
 ---
 
@@ -120,7 +120,7 @@ python manage.py runserver
 
 The API is then available at `http://127.0.0.1:8000/`.
 
-> **Re-running `seed_db.py`** is safe — users are upserted with `get_or_create` and all financial records are wiped and recreated, making it fully idempotent.
+> **Re-running `seed_db.py`** is safe. Users are upserted with `get_or_create` and all financial records are wiped and recreated, making it fully idempotent.
 
 ### Running Tests
 
@@ -168,7 +168,7 @@ All endpoints are prefixed with `/api/`. Authentication uses `Authorization: Bea
 | `POST`   | `/api/users/`        | Create a new user account with a specified role                       |
 | `GET`    | `/api/users/{uuid}/` | Retrieve a single user by UUID                                        |
 | `PATCH`  | `/api/users/{uuid}/` | Update role, email, or active status                                  |
-| `DELETE` | `/api/users/{uuid}/` | **Soft-deactivate** — sets `is_active=False`, does not remove the row |
+| `DELETE` | `/api/users/{uuid}/` | **Soft-deactivate:** sets `is_active=False`, does not remove the row  |
 
 ### Financial Records
 
@@ -217,7 +217,7 @@ All endpoints are prefixed with `/api/`. Authentication uses `Authorization: Bea
 
 4. **Pytest over Django's built-in `TestCase`.** Pytest's fixture system (dependency injection) is cleaner than `unittest` style inheritance and avoids boilerplate. Integration tests (full request/response cycle) were prioritized over unit tests, because in a finance app the entry points between auth, permissions, and serializers are where real bugs surface.
 
-5. **Atomic audit logging.** Every write operation (CREATE, UPDATE, DELETE) on both `records/` and `users/` wraps the database mutation and the audit log INSERT inside `transaction.atomic()`. If either step fails, both roll back — no un-logged mutations, no orphaned log entries.
+5. **Atomic audit logging.** Every write operation (CREATE, UPDATE, DELETE) on both `records/` and `users/` wraps the database mutation and the audit log INSERT inside `transaction.atomic()`. If either step fails, both roll back. No un-logged mutations, no orphaned log entries.
 
 ### Known Limitations
 
