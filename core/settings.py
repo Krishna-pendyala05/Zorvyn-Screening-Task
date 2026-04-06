@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
 
-# Domain: core | Purpose: Production-ready global settings for Zorvyn Backend
+# Domain: core | Purpose: Simplistic Production-ready global settings for Zorvyn Backend
 
 load_dotenv()
 
